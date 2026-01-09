@@ -183,10 +183,17 @@ app.get('/api/availability', async (req, res) => {
 
 // 3. Schedule Endpoint - Used by Zek/Frontend
 app.post('/api/schedule', async (req, res) => {
-    const { name, email, date } = req.body; // ISO Date String
+    let { name, email, date } = req.body; // ISO Date String
 
     if (!name || !email || !date) {
         return res.status(400).json({ success: false, message: "Missing required fields: name, email, date" });
+    }
+
+    // Fix: If date string is naive (e.g. "2026-01-10T14:00:00"), force Sao Paulo timezone (-03:00)
+    // to prevent server from assuming UDP/Local(UTC) and shifting the time.
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(date)) {
+        console.log(`⚠️ Detected naive date string: ${date}. Forcing -03:00 (Sao Paulo).`);
+        date += '-03:00';
     }
 
     try {
